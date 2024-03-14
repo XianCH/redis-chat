@@ -33,7 +33,7 @@ func NewServer() *server {
 var MyServer = NewServer()
 
 func (s *server) Close() {
-	for key, _ := range s.Clients {
+	for key := range s.Clients {
 		s.Clients[key].conn.Close()
 		delete(s.Clients, key)
 	}
@@ -41,7 +41,8 @@ func (s *server) Close() {
 	close(s.unregister)
 }
 
-func (s *server) start() {
+// 开启注册，取消注册，广播通道
+func (s *server) Start() {
 	for {
 		select {
 		case conn := <-s.register:
@@ -74,13 +75,16 @@ func (s *server) start() {
 
 func (s *server) Score() {
 	router := http.NewServeMux()
+	router.HandleFunc("/ws", RunSocket)
 	s1 := &http.Server{
-		Addr:           ":8888",
+		Addr:           ":12346",
 		Handler:        router,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+
+	log.Println("server start at 12346")
 	err := s1.ListenAndServe()
 	if err != nil {
 		log.Printf("server start error :%v\n", err)
